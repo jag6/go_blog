@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/yuin/goldmark"
 )
 
 func main() {
@@ -44,10 +48,36 @@ func PostHandler(sl SlugReader) http.HandlerFunc {
 		slug := r.PathValue("slug")
 		postMarkdown, err := sl.Read(slug)
 		if err != nil {
-			// TODO: handle different errors
 			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		}
-		fmt.Fprint(w, postMarkdown)
+		var buf bytes.Buffer
+		err = goldmark.Convert([]byte(postMarkdown), &buf)
+		if err != nil {
+			http.Error(w, "Error converting markdown", http.StatusInternalServerError)
+			return
+		}
+		// TODO: parse template once and not on every page load
+		tpl, err := template.ParseFiles("post.gohtml")
+		if err != nil {
+			http.Error(w, "Error parsing template", http.StatusInternalServerError)
+			return
+		}
+		// TODO: stop hardcoding post data. parse from frontmatter
+		err = tpl.Execute(w, PostData{
+			Title:   "Title",
+			Content: template.HTML(buf.String()),
+			Author:  "Me",
+		})
+		if err != nil {
+			http.Error(w, "Error executing template", http.StatusInternalServerError)
+		}
+		// io.Copy(w, &buf)
 	}
+}
+
+type PostData struct {
+	Title   string
+	Content template.HTML
+	Author  string
 }
