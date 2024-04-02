@@ -16,7 +16,9 @@
     <main>
         <section>
             <h1>{{.Title}}</h1>
-            <div><p>{{.Author}}</p></div>
+            {{with .Author}}
+                <div><p>{{.Name}} <a href="mailto:{{.Email}}"></a></p></div>
+            {{end}}
         </section>
         <section>
             {{.Content}}

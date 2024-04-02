@@ -1,16 +1,16 @@
 +++
-title = "Lorem Ipsum"
+title = "Lorem Ipsum2"
 description = "blah blah blah awesomeness forever."
-date = 2024-03-03
+date = 2024-04-03
 
 [author]
 name = "Me"
 email = "me@me.com"
 +++
 
-## Stuff
+## Jazz
 
-List Items
-- 1
-- 2
-- 3
+Compositions
+- Orbits
+- Footprints
+- Dolores

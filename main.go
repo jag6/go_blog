@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/adrg/frontmatter"
 	"github.com/yuin/goldmark"
 )
 
@@ -45,14 +47,21 @@ func (fsr FileReader) Read(slug string) (string, error) {
 
 func PostHandler(sl SlugReader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var post Post
 		slug := r.PathValue("slug")
 		postMarkdown, err := sl.Read(slug)
 		if err != nil {
 			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		}
+		rest, err := frontmatter.Parse(strings.NewReader(postMarkdown), &post)
+		if err != nil {
+			http.Error(w, "Error parsing frontmatter", http.StatusInternalServerError)
+			return
+		}
+
 		var buf bytes.Buffer
-		err = goldmark.Convert([]byte(postMarkdown), &buf)
+		err = goldmark.Convert(rest, &buf)
 		if err != nil {
 			http.Error(w, "Error converting markdown", http.StatusInternalServerError)
 			return
@@ -63,21 +72,22 @@ func PostHandler(sl SlugReader) http.HandlerFunc {
 			http.Error(w, "Error parsing template", http.StatusInternalServerError)
 			return
 		}
-		// TODO: stop hardcoding post data. parse from frontmatter
-		err = tpl.Execute(w, PostData{
-			Title:   "Title",
-			Content: template.HTML(buf.String()),
-			Author:  "Me",
-		})
+		post.Content = template.HTML(buf.String())
+		err = tpl.Execute(w, post)
 		if err != nil {
 			http.Error(w, "Error executing template", http.StatusInternalServerError)
 		}
-		// io.Copy(w, &buf)
 	}
 }
 
-type PostData struct {
-	Title   string
+type Post struct {
+	Title   string `toml:"title"`
+	Slug    string `toml:"slug"`
 	Content template.HTML
-	Author  string
+	Author  Author `toml:"author"`
+}
+
+type Author struct {
+	Name  string `toml:"name"`
+	Email string `toml:"email"`
 }
