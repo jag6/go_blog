@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metadata First -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Title -->
+    <title>{{block "title" .}}{{end}} | Fotogen</title>
+    <!-- Fonts + CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/{{block "css" .}}{{end}}.css">
+    <!-- Favicon -->
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://goblog.site{{block "url" .}}{{end}}">
+    <!-- Metadata -->
+    <meta name="description" content="{{block "description" .}}{{end}}">
+    <meta name="format-detection" content="telephone=no">
+    <!-- Twitter Metadata -->
+    <meta name="twitter:title" content="{{block "title" .}}{{end}}">
+    <meta name="twitter:description" content="{{block "description" .}}{{end}}">
+    <meta name="twitter:image" content="/static/images/meta-image.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Other Social Media Metadata -->
+    <meta property="og:title" content="{{block "title" .}}{{end}}">
+    <meta property="og:description" content="{{block "description" .}}{{end}}">
+    <meta property="og:image" content="/static/images/meta-image.webp">
+    <meta property="og:url" content="https://goblog.site{{block "url" .}}{{end}}">
+    <meta property="og:site_name" content="Go Blog">
+    <!--Scripts -->
+    <script src="/static/js/main.js" defer></script>
+    {{block "js" .}}{{end}}
+</head>
+<body>
+    <header>
+        <nav class="nav">
+            <div class="logo">
+                <a href="/">
+                </a>
+            </div>
+            {{template "links" .}}
+        </nav>
+        <div id="hamburger-icon" class="hamburger-icon">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <div id="nav-overlay" class="nav-overlay">
+            <nav id="mobile-nav" class="mobile-nav">
+                {{template "links" .}}
+            </nav>
+        </div>
+        <div class="search-m">
+            {{template "search-bar" .}}
+        </div>
+    </header>
+    <main>
+        {{template "page" .}}
+    </main>
+    <footer>
+        <div>
+            <p>Go Blog 2024&copy;</p>
+        </div>
+    </footer>
+</body>
+</html>
+
+{{define "links"}}
+    {{template "page-links" .}}
+{{end}}
+
+{{define "search-bar"}}
+    <form action="/search" class="search-form">
+        <input type="text" name="q" placeholder="Search...">
+        <button type="submit" aria-label="Search Button"><i class="fa fa-search"></i></button>
+    </form>
+{{end}}
+
+{{define "page-links"}}
+    <div class="page-links">
+        <ul>
+            <li><a href="/">HOME</a></li>
+            <li><a href="/about">ABOUT</a></li>
+            <li><a href="/contact">CONTACT</a></li>
+            <li><a href="/faq">FAQ</a></li>
+        </ul>
+    </div>
+{{end}}

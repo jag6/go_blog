@@ -14,10 +14,29 @@ import (
 	"github.com/yuin/goldmark"
 )
 
+// func notFound(w http.ResponseWriter, r *http.Request) {
+// 	http.ServeFile(w, r, "public/404.gohtml")
+// }
+
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /posts/{slug}", PostHandler(FileReader{}))
+	//static files
+	staticHandler := http.FileServer(http.Dir("static"))
+	mux.HandleFunc("GET /static*", http.StripPrefix("/static", staticHandler).ServeHTTP)
+
+	//homepage
+	mux.HandleFunc("GET /", StaticHandler(template.Must(template.ParseFiles("templates/base.gohtml", "templates/index.gohtml"))))
+
+	//about
+	mux.HandleFunc("GET /about", StaticHandler(template.Must(template.ParseFiles("templates/base.gohtml", "templates/about.gohtml"))))
+
+	//posts
+	postTemplate := template.Must(template.ParseFiles("post.gohtml"))
+	mux.HandleFunc("GET /posts/{slug}", PostHandler(FileReader{}, postTemplate))
+
+	//404
+	// todo
 
 	fmt.Println("server running on " + "http://localhost:3030")
 	err := http.ListenAndServe(":3030", mux)
@@ -45,15 +64,28 @@ func (fsr FileReader) Read(slug string) (string, error) {
 	return string(b), nil
 }
 
-func PostHandler(sl SlugReader) http.HandlerFunc {
+type Post struct {
+	Content template.HTML
+	Title   string `toml:"title"`
+	Slug    string `toml:"slug"`
+	Author  Author `toml:"author"`
+}
+
+type Author struct {
+	Name  string `toml:"name"`
+	Email string `toml:"email"`
+}
+
+func PostHandler(sl SlugReader, tpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var post Post
 		slug := r.PathValue("slug")
 		postMarkdown, err := sl.Read(slug)
 		if err != nil {
 			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		}
+
+		var post Post
 		rest, err := frontmatter.Parse(strings.NewReader(postMarkdown), &post)
 		if err != nil {
 			http.Error(w, "Error parsing frontmatter", http.StatusInternalServerError)
@@ -73,21 +105,21 @@ func PostHandler(sl SlugReader) http.HandlerFunc {
 			return
 		}
 		post.Content = template.HTML(buf.String())
+
 		err = tpl.Execute(w, post)
 		if err != nil {
 			http.Error(w, "Error executing template", http.StatusInternalServerError)
+			return
 		}
 	}
 }
 
-type Post struct {
-	Title   string `toml:"title"`
-	Slug    string `toml:"slug"`
-	Content template.HTML
-	Author  Author `toml:"author"`
-}
-
-type Author struct {
-	Name  string `toml:"name"`
-	Email string `toml:"email"`
+func StaticHandler(tpl *template.Template) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := tpl.Execute(w, r)
+		if err != nil {
+			http.Error(w, "Error executing static template", http.StatusInternalServerError)
+			return
+		}
+	}
 }
